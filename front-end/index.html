@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Photo Album</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1 { color: #333; }
+        input, button { padding: 10px; margin: 5px; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+        #results { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        #results img { width: 200px; height: 200px; object-fit: cover; border-radius: 8px; }
+        .section { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>📷 Photo Album</h1>
+    <div class="section">
+        <h2>Search Photos</h2>
+        <input type="text" id="searchQuery" placeholder="e.g. show me dogs" style="width:300px"/>
+        <button onclick="searchPhotos()">Search</button>
+        <div id="results"></div>
+    </div>
+    <div class="section">
+        <h2>Upload Photo</h2>
+        <input type="file" id="photoFile" accept="image/*"/>
+        <input type="text" id="customLabels" placeholder="Custom labels (e.g. Sam, Sally)"/>
+        <button onclick="uploadPhoto()">Upload</button>
+        <p id="uploadStatus"></p>
+    </div>
+    <script>
+        const API_URL = 'https://r2c92ueq25.execute-api.us-east-1.amazonaws.com/prod';
+        const S3_BUCKET = 'photos-bucket-924140528108';
+        const S3_REGION = 'us-east-1';
+        async function searchPhotos() {
+            const query = document.getElementById('searchQuery').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Searching...';
+            try {
+                const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = data.results.map(photo =>
+                        `<div><img src="${photo.url}" alt="${photo.labels.join(', ')}"/>
+                        <p>${photo.labels.join(', ')}</p></div>`
+                    ).join('');
+                } else {
+                    resultsDiv.innerHTML = '<p>No photos found!</p>';
+                }
+            } catch(e) {
+                resultsDiv.innerHTML = '<p>Error: ' + e.message + '</p>';
+            }
+        }
+        async function uploadPhoto() {
+            const file = document.getElementById('photoFile').files[0];
+            const customLabels = document.getElementById('customLabels').value;
+            const status = document.getElementById('uploadStatus');
+            if (!file) { alert('Please select a file!'); return; }
+            status.textContent = 'Uploading...';
+            try {
+                const headers = { 'Content-Type': file.type };
+                if (customLabels) headers['x-amz-meta-customlabels'] = customLabels;
+                const url = `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${file.name}`;
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: file
+                });
+                if (response.ok) {
+                    status.textContent = 'Uploaded! Wait 10 seconds then search.';
+                } else {
+                    status.textContent = 'Failed: ' + response.status;
+                }
+            } catch(e) {
+                status.textContent = 'Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
