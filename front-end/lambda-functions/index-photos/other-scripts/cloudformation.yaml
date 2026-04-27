@@ -14,23 +14,24 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: photo-album-cf-role
+      RoleName: photo-album-cf-role-new
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
+            Action: 'sts:AssumeRole'
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonRekognitionFullAccess'
 
   IndexPhotosFunctionCF:
     Type: AWS::Lambda::Function
+    DependsOn: LambdaExecutionRole
     Properties:
-      FunctionName: index-photos-cf-new
+      FunctionName: index-photos-cf-v2
       Runtime: python3.12
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -42,7 +43,24 @@ Resources:
 
   SearchPhotosFunctionCF:
     Type: AWS::Lambda::Function
+    DependsOn: LambdaExecutionRole
     Properties:
-      FunctionName: search-photos-cf-new
+      FunctionName: search-photos-cf-v2
       Runtime: python3.12
-      Handler: index.
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+            return {'statusCode': 200, 'body': 'ok'}
+      Timeout: 60
+
+  PhotoSearchAPICF:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: PhotoSearchAPI-CF-V2
+
+Outputs:
+  FrontendURL:
+    Value: !GetAtt FrontendBucketCF.WebsiteURL
+    Description: Frontend website URL
