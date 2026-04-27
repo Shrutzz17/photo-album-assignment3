@@ -2,33 +2,31 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Photo Album Assignment 3
 
 Resources:
-  PhotosBucket:
+  PhotosBucketCF:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'photos-bucket-${AWS::AccountId}'
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']
             AllowedMethods: [GET, PUT]
             AllowedOrigins: ['*']
 
-  FrontendBucket:
+  FrontendBucketCF:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'frontend-bucket-${AWS::AccountId}'
       WebsiteConfiguration:
         IndexDocument: index.html
 
   IndexPhotosFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: index-photos
+      FunctionName: index-photos-cf
       Runtime: python3.12
-      Handler: lambda_function.lambda_handler
+      Handler: index.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/index-photos-role-09l9wx53'
       Code:
         ZipFile: |
-          def lambda_handler(event, context):
+          def handler(event, context):
             return {'statusCode': 200, 'body': 'ok'}
       Timeout: 60
       MemorySize: 256
@@ -38,21 +36,21 @@ Resources:
     Properties:
       FunctionName: search-photos-cf
       Runtime: python3.12
-      Handler: lambda_function.lambda_handler
+      Handler: index.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/search-photos-role-ixytji9g'
       Code:
         ZipFile: |
-          def lambda_handler(event, context):
+          def handler(event, context):
             return {'statusCode': 200, 'body': 'ok'}
       Timeout: 60
       MemorySize: 256
 
-  PhotoSearchAPI:
+  PhotoSearchAPICF:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: PhotoSearchAPI-CF
 
 Outputs:
   FrontendURL:
-    Value: !GetAtt FrontendBucket.WebsiteURL
+    Value: !GetAtt FrontendBucketCF.WebsiteURL
     Description: Frontend website URL
