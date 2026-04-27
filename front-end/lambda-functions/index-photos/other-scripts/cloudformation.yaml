@@ -20,7 +20,7 @@ Resources:
   IndexPhotosFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: index-photos-cf
+      FunctionName: index-photos-cloudformation
       Runtime: python3.12
       Handler: index.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/index-photos-role-09l9wx53'
@@ -34,7 +34,7 @@ Resources:
   SearchPhotosFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: search-photos-cf
+      FunctionName: search-photos-cloudformation
       Runtime: python3.12
       Handler: index.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/search-photos-role-ixytji9g'
@@ -48,7 +48,7 @@ Resources:
   PhotoSearchAPICF:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: PhotoSearchAPI-CF
+      Name: PhotoSearchAPI-CF2
 
 Outputs:
   FrontendURL:
